@@ -1,0 +1,536 @@
+loadrt [KINS]KINEMATICS
+#autoconverted  trivkins
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS num_dio=6 num_aio=3
+loadusr -W lcec_conf /home/aimilios/linuxcnc/configs/CNC_EMILL/ethercat-conf.xml
+loadrt lcec
+loadrt cia402 count=6
+loadrt pid num_chan=4 debug=1
+loadrt scale count=3
+loadrt abs count=2
+loadrt comp count=1
+loadrt and2 count=9
+loadrt lowpass count=2
+loadrt conv_s32_float names=spindle_count_float
+loadrt ddt count=1
+loadrt not count=8
+loadrt edge  count=1
+loadrt near count=1
+loadrt mux2 count=5
+
+
+
+addf lcec.read-all            servo-thread
+
+addf cia402.0.read-all        servo-thread
+addf cia402.1.read-all        servo-thread
+addf cia402.2.read-all        servo-thread
+addf cia402.3.read-all		  servo-thread
+addf cia402.4.read-all		  servo-thread
+
+addf motion-command-handler   servo-thread
+addf motion-controller        servo-thread
+
+addf mux2.0                   servo-thread
+addf mux2.1                   servo-thread
+addf mux2.2                   servo-thread
+addf mux2.3                   servo-thread
+
+#PID component
+addf pid.0.do-pid-calcs       servo-thread
+addf pid.1.do-pid-calcs       servo-thread
+addf pid.2.do-pid-calcs       servo-thread
+addf pid.3.do-pid-calcs       servo-thread
+
+addf cia402.0.write-all       servo-thread
+addf cia402.1.write-all       servo-thread
+addf cia402.2.write-all       servo-thread
+addf cia402.3.write-all       servo-thread
+addf cia402.4.write-all       servo-thread
+
+addf lcec.write-all           servo-thread
+
+addf lowpass.0 				  servo-thread
+addf lowpass.1 				  servo-thread
+
+addf scale.0 				  servo-thread
+addf scale.1 				  servo-thread
+
+addf abs.0 					  servo-thread
+addf comp.0 				  servo-thread
+addf spindle_count_float 	  servo-thread
+addf ddt.0 					  servo-thread
+addf and2.0					  servo-thread
+addf and2.1					  servo-thread
+addf and2.2					  servo-thread
+addf and2.3					  servo-thread
+addf and2.4                   servo-thread
+addf and2.5   				  servo-thread
+addf and2.7   				  servo-thread
+addf and2.8   				  servo-thread
+addf not.2                    servo-thread
+addf not.3                    servo-thread
+addf not.4                    servo-thread
+addf not.5                    servo-thread
+addf not.6                    servo-thread
+addf not.7                    servo-thread
+addf edge.0                   servo-thread
+addf near.0  				  servo-thread
+addf and2.6 				  servo-thread
+
+
+#*******************
+#  AXIS X (Joint 0)
+#*******************
+
+setp cia402.0.csp-mode 1
+setp cia402.0.pos-scale 1677721.6
+
+# --- PID CONFIGURATION ---
+setp pid.0.maxoutput 1000000000
+setp pid.0.enable 1
+
+# --- Map INI Settings to PID Component ---
+setp pid.0.Pgain     [JOINT_0]P
+setp pid.0.Igain     [JOINT_0]I
+setp pid.0.Dgain     [JOINT_0]D
+setp pid.0.FF0       [JOINT_0]FF0
+setp pid.0.FF1       [JOINT_0]FF1
+setp pid.0.FF2       [JOINT_0]FF2
+setp pid.0.deadband  [JOINT_0]DEADBAND
+
+# joint signals for motion
+
+# --- MUX LOGIC for SOFT START ---
+# Logic: If Disabled (0), PID Command = Feedback (No jump).
+#        If Enabled  (1), PID Command = LinuxCNC Joint Command.
+
+net x-enable      joint.0.amp-enable-out   => mux2.0.sel cia402.0.enable
+net x-pos-fb      cia402.0.pos-fb          => mux2.0.in0 pid.0.feedback joint.0.motor-pos-fb
+net x-pos-cmd-raw joint.0.motor-pos-cmd    => mux2.0.in1
+net x-pos-cmd-safe mux2.0.out              => pid.0.command
+
+# --- OUTPUT ---
+net x-output      pid.0.output             => cia402.0.pos-cmd
+
+# --- FAULT ---
+net x-amp-fault   cia402.0.drv-fault       => joint.0.amp-fault-in
+
+# ethercat to cia402 driver
+
+net x-statusword      lcec.0.9.cia-statusword  => cia402.0.statusword
+net x-opmode-display  lcec.0.9.opmode-display  => cia402.0.opmode-display
+net x-drv-act-pos     lcec.0.9.actual-position => cia402.0.drv-actual-position
+
+# cia402 driver to ethercat
+
+net x-controlword         cia402.0.controlword         => lcec.0.9.cia-controlword
+net x-modes-of-operation  cia402.0.opmode              => lcec.0.9.opmode
+net x-drv-target-pos      cia402.0.drv-target-position => lcec.0.9.target-position
+
+# homing
+
+#net x-home-request joint.0.request-custom-homing => cia402.0.home
+#net x-homing joint.0.is-custom-homing <= cia402.0.stat-homing
+#net x-homed joint.0.custom-homing-finished <= cia402.0.stat-homed
+
+
+#*******************
+#  AXIS Y (Joint 1)
+#*******************
+
+setp cia402.1.csp-mode 1
+setp cia402.1.pos-scale 1677721.6
+
+# --- PID CONFIGURATION ---
+setp pid.1.maxoutput 1000000000
+setp pid.1.enable 1
+
+setp pid.1.Pgain     [JOINT_1]P
+setp pid.1.Igain     [JOINT_1]I
+setp pid.1.Dgain     [JOINT_1]D
+setp pid.1.FF0       [JOINT_1]FF0
+setp pid.1.FF1       [JOINT_1]FF1
+setp pid.1.FF2       [JOINT_1]FF2
+setp pid.1.deadband  [JOINT_1]DEADBAND
+
+# joint signals for motion
+
+# --- MUX LOGIC for SOFT START ---
+# Logic: If Disabled (0), PID Command = Feedback (No jump).
+#        If Enabled  (1), PID Command = LinuxCNC Joint Command.
+
+net y-enable      joint.1.amp-enable-out   => mux2.1.sel cia402.1.enable
+net y-pos-fb      cia402.1.pos-fb          => mux2.1.in0 pid.1.feedback joint.1.motor-pos-fb
+net y-pos-cmd-raw joint.1.motor-pos-cmd    => mux2.1.in1
+net y-pos-cmd-safe mux2.1.out              => pid.1.command
+
+# --- OUTPUT ---
+net y-output      pid.1.output             => cia402.1.pos-cmd
+
+# --- FAULT ---
+net y-amp-fault   cia402.1.drv-fault       => joint.1.amp-fault-in
+
+# ethercat to cia402 driver
+
+net y-statusword      lcec.0.10.cia-statusword  => cia402.1.statusword
+net y-opmode-display  lcec.0.10.opmode-display  => cia402.1.opmode-display
+net y-drv-act-pos     lcec.0.10.actual-position => cia402.1.drv-actual-position
+
+# cia402 driver to ethercat
+
+net y-controlword         cia402.1.controlword         => lcec.0.10.cia-controlword
+net y-modes-of-operation  cia402.1.opmode              => lcec.0.10.opmode
+net y-drv-target-pos      cia402.1.drv-target-position => lcec.0.10.target-position
+
+# homing
+
+#net y-home-request joint.1.request-custom-homing => cia402.1.home
+#net y-homing joint.1.is-custom-homing <= cia402.1.stat-homing 
+#net y-homed joint.1.custom-homing-finished <= cia402.1.stat-homed
+
+
+
+#*******************
+#  AXIS Z (Joint 2)
+#*******************
+
+setp cia402.2.csp-mode 1
+setp cia402.2.pos-scale 1677721.6 
+
+# --- PID CONFIGURATION ---
+setp pid.2.maxoutput 1000000000
+setp pid.2.enable 1
+
+setp pid.2.Pgain     [JOINT_2]P
+setp pid.2.Igain     [JOINT_2]I
+setp pid.2.Dgain     [JOINT_2]D
+setp pid.2.FF0       [JOINT_2]FF0
+setp pid.2.FF1       [JOINT_2]FF1
+setp pid.2.FF2       [JOINT_2]FF2
+setp pid.2.deadband  [JOINT_2]DEADBAND
+
+# 3355443 when belt driven
+
+# joint signals for motion
+
+# --- MUX LOGIC for SOFT START ---
+# Logic: If Disabled (0), PID Command = Feedback (No jump).
+#        If Enabled  (1), PID Command = LinuxCNC Joint Command.
+
+net z-enable      joint.2.amp-enable-out   => mux2.2.sel cia402.2.enable
+net z-pos-fb      cia402.2.pos-fb          => mux2.2.in0 pid.2.feedback joint.2.motor-pos-fb
+net z-pos-cmd-raw joint.2.motor-pos-cmd    => mux2.2.in1
+net z-pos-cmd-safe mux2.2.out              => pid.2.command
+
+# --- OUTPUT ---
+net z-output      pid.2.output             => cia402.2.pos-cmd
+
+# --- FAULT ---
+net z-amp-fault   cia402.2.drv-fault       => joint.2.amp-fault-in
+
+# ethercat to cia402 driver
+
+net z-statusword      lcec.0.11.cia-statusword  => cia402.2.statusword
+net z-opmode-display  lcec.0.11.opmode-display  => cia402.2.opmode-display
+net z-drv-act-pos     lcec.0.11.actual-position => cia402.2.drv-actual-position
+
+# cia402 driver to ethercat
+
+net z-controlword         cia402.2.controlword         => lcec.0.11.cia-controlword
+net z-modes-of-operation  cia402.2.opmode              => lcec.0.11.opmode
+net z-drv-target-pos      cia402.2.drv-target-position => lcec.0.11.target-position
+
+# homing
+
+#net z-home-request joint.2.request-custom-homing => cia402.2.home
+#net z-homing joint.2.is-custom-homing <= cia402.2.stat-homing
+#net z-homed joint.2.custom-homing-finished <= cia402.2.stat-homed
+
+
+#*********************
+#   Harmonic Drive A-Axis (Joint 3)
+#*********************
+
+# CIA402 Mode: Position (8)
+setp cia402.3.csp-mode 1       
+
+# Encoder + gear ratio scaling in degrees (53463360 / 360 in degrees)
+setp cia402.3.pos-scale 352518
+
+
+# --- PID CONFIGURATION ---
+setp pid.3.maxoutput 1000000000
+setp pid.3.enable 1
+
+setp pid.3.Pgain     [JOINT_3]P
+setp pid.3.Igain     [JOINT_3]I
+setp pid.3.Dgain     [JOINT_3]D
+setp pid.3.FF0       [JOINT_3]FF0
+setp pid.3.FF1       [JOINT_3]FF1
+setp pid.3.FF2       [JOINT_3]FF2
+setp pid.3.deadband  [JOINT_3]DEADBAND
+
+## Position command
+
+# --- MUX LOGIC for SOFT START ---
+# Logic: If Disabled (0), PID Command = Feedback (No jump).
+#        If Enabled  (1), PID Command = LinuxCNC Joint Command.
+
+net a-enable      joint.3.amp-enable-out   => mux2.3.sel cia402.3.enable
+net a-pos-fb      cia402.3.pos-fb          => mux2.3.in0 pid.3.feedback joint.3.motor-pos-fb
+net a-pos-cmd-raw joint.3.motor-pos-cmd    => mux2.3.in1
+net a-pos-cmd-safe mux2.3.out              => pid.3.command
+
+# --- OUTPUT ---
+net a-output      pid.3.output             => cia402.3.pos-cmd
+
+# --- FAULT ---
+net a-amp-fault   cia402.3.drv-fault       => joint.3.amp-fault-in
+
+# ethercat to cia402 driver
+
+net a-statusword      lcec.0.12.cia-statusword  => cia402.3.statusword
+net a-opmode-display  lcec.0.12.opmode-display  => cia402.3.opmode-display
+net a-drv-act-pos     lcec.0.12.actual-position => cia402.3.drv-actual-position
+
+# cia402 driver to ethercat
+
+net a-controlword         cia402.3.controlword         => lcec.0.12.cia-controlword
+net a-modes-of-operation  cia402.3.opmode              => lcec.0.12.opmode
+net a-drv-target-pos      cia402.3.drv-target-position => lcec.0.12.target-position
+
+
+# Optional error code
+net a-error       <= lcec.0.12.error-code
+
+
+
+# =========================
+#  E-STOP INTEGRATION (PNOZ 41–42 -> EL1008 IN0)
+#  Hardware wiring in your case:
+#    PNOZ 41–42 contact -> EL1008 IN0 (lcec.0.2.din-0)
+#    Result: lcec.0.2.din-0 = 1 when E-stop is PRESSED (unsafe)
+# =========================
+
+# --- Raw hardware signal from EtherCAT ---
+net estop_hw_raw                 lcec.0.2.din-0     # 1 = E-stop pressed, 0 = OK
+
+# --- Invert to get "safety_ok" (true when the safety chain is healthy) ---
+net estop_hw_raw                     => not.6.in
+net safety_ok                    not.6.out          # 1 = safe, 0 = unsafe
+
+# --- Latching logic: trips on hardware or GUI E-stop; auto-resets when safe ---
+loadrt or2 count=3
+addf   or2.0                     servo-thread       # trip OR (hardware | GUI)
+addf   or2.1                     servo-thread       # reset OR (safety_ok | GUI reset)
+addf   or2.2                     servo-thread       # toolrelease OR (not-running | toolchange)
+
+loadrt estop_latch
+addf   estop-latch.0             servo-thread
+
+# Trip sources
+net estop_hw_raw       => estop-latch.0.fault-in
+
+# Allow/OK gating
+net safety_ok                    => estop-latch.0.ok-in
+
+# Reset sources (auto-reset when safety_ok returns, or manual GUI reset)
+net safety_ok          			 => estop-latch.0.reset
+
+# Feed LinuxCNC enable
+net machine_enable               estop-latch.0.ok-out  => iocontrol.0.emc-enable-in
+
+
+
+########## Spindle air purge on when machine power is ON
+net machine-power-on   halui.machine.is-on    =>  lcec.0.4.dout-1
+
+####################################################
+
+########## SPINDLE Encoder Count EL5021
+#*********************
+
+# Set gain for 196608 counts per rev
+setp scale.0.gain -0.00000508976
+
+# Wire up encoder position to spindle motion system
+net spindle-raw-counts       lcec.0.8.enc-count => spindle_count_float.in
+net spindle-counts-as-float  spindle_count_float.out => scale.0.in
+#net spindle-revolutions      scale.0.out => spindle.0.revs
+
+# --- SMOOTHING SPINDLE FEEDBACK FOR TAPPING ---
+# 1. Send Scale output to Filter Input
+net spindle-revs-raw     scale.0.out  => lowpass.1.in
+
+# 2. Configure Filter (Higher gain = less filtering. Try 50 to 100).
+# A value of 100 allows fast reaction but kills high-freq jitter.
+setp lowpass.1.gain 0.175
+
+# 3. Send Filtered Output to LinuxCNC Motion
+net spindle-revolutions  lowpass.1.out => spindle.0.revs
+
+#CONVERT NO OF REVOLUTIONS TO RPM
+
+# ddt input = revolutions → ddt output = revs/sec
+net spindle-revolutions spindle.0.revs => ddt.0.in
+
+# multiply revs/sec × 60 → RPM
+setp scale.1.gain 60
+
+net spindle-revs-per-sec ddt.0.out => scale.1.in
+net spindle-rpm scale.1.out
+
+# Connect C latch valid to LinuxCNC's index-enable
+#net encoder-index-enable   lcec.0.8.enc-index-c-enable => spindle.0.index-enable
+net spindle-index-enable   spindle.0.index-enable => lcec.0.8.enc-index-c-enable
+
+#FILTER
+
+setp lowpass.0.gain 0.01 		# the lower the heavier the filter
+
+net spindle-rpm   scale.1.out => lowpass.0.in
+net spindle-rpm-filtered <= lowpass.0.out
+
+
+####################################################
+
+########## Tool Release Button Safety
+# Tool release is permitted only when:
+#   - Spindle is stopped (RPM below threshold)
+#   - Air OK
+#   - Machine is in-position (not moving)  [NOTE: may not block jogging on some configs]
+#   - AND (NOT executing a program/MDI) OR (a toolchange is currently requested/waiting)
+
+# Set RPM threshold for "spindle stopped"
+setp comp.0.in1 3      # 3 RPM threshold
+
+# Connect RPM signal
+net spindle-rpm-filtered              => abs.0.in
+net spindle-rpm-abs        abs.0.out  => comp.0.in0
+net spindle-stopped        comp.0.out
+
+# Program/MDI execution state
+net prog-running           <= halui.program.is-running
+net prog-running                         => not.7.in
+net prog-not-running       <= not.7.out
+
+# Toolchange request (TRUE while waiting for operator acknowledgement during M6)
+net tc-request            <= iocontrol.0.tool-change
+net tc-prep-number         <= iocontrol.0.tool-prep-number
+# Tool change completion comes from the UI (wired in postgui)
+net tc-confirmed           => iocontrol.0.tool-changed
+# Acknowledge tool-prepare immediately (no ATC)
+net tc-prepare-loop        iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
+
+# Allow tool release state: (not running) OR (toolchange requested)
+net prog-not-running                    => or2.2.in0
+net tc-request                          => or2.2.in1
+net allow-unclamp-state     <= or2.2.out
+
+# Base condition: spindle-stopped & air-ok
+net spindle-stopped                     => and2.0.in0
+net air-ok                              => and2.0.in1
+net toolrel-cond0           <= and2.0.out
+
+# Add execution-state condition: base & allow-unclamp-state
+net toolrel-cond0                       => and2.7.in0
+net allow-unclamp-state                 => and2.7.in1
+net toolrel-cond1           <= and2.7.out
+
+# Add motion stationary condition: cond1 & motion.in-position
+net toolrel-cond1                       => and2.8.in0
+net motion-in-position      motion.in-position => and2.8.in1
+net toolrel-cond            <= and2.8.out
+
+# Final gating: button & toolrel-cond -> solenoid
+net tool-release-button     <= lcec.0.1.din-4
+net tool-release-button                  => and2.1.in0
+net toolrel-cond                         => and2.1.in1
+
+# Output to solenoid
+net tool-release-enable     <= and2.1.out
+net tool-release-enable                  => lcec.0.4.dout-0
+
+####################################################
+####################################################
+
+########## SAFETY INTERLOCKS (HAL) 
+
+# EtherCAT pins (NC means TRUE when OK):
+#  - Air pressure OK (NC): lcec.0.1.din-5
+#  - Spindle temperature OK (NC): lcec.0.1.din-0
+#  - Tool locked/present (TRUE when clamped): lcec.0.1.din-1
+
+# Direct nets from EtherCAT pins to “OK” signals
+net air-ok        <= lcec.0.1.din-5
+net temp-ok       <= lcec.0.1.din-0
+net tool-locked   <= lcec.0.1.din-1
+
+# Build the safety permit: spindle_safety_ok = air_ok & temp_ok & tool_locked
+net air-ok             => and2.2.in0
+net temp-ok            => and2.2.in1
+net air-and-temp-ok    <= and2.2.out
+
+net air-and-temp-ok    => and2.3.in0
+net tool-locked        => and2.3.in1
+net spindle-safety-ok  <= and2.3.out
+
+########## only allow program to run when spindle_safety_ok is true
+
+# Make the interpreter think “at-speed” only when safety is OK
+# net spindle-safety-ok => spindle.0.at-speed
+
+########## SAFETY → GLOBAL START INTERLOCK (User-Enable) ===
+
+net unsafe                 <= not.2.out
+net spindle-safety-ok      => not.2.in
+net unsafe                 => motion.feed-inhibit
+
+# 2) If a program manages to enter RUN while unsafe, stop it immediately
+#    (catches UI quirks / lookahead edges)
+
+# Condition: (program is running) AND (unsafe)
+#net prog-running          <= halui.program.is-running # already in postgui.hal
+net stop-cond              <= and2.5.out
+net prog-running           => and2.5.in0
+net unsafe                 => and2.5.in1
+
+# Rising edge → one-shot stop command
+net stop-cond              => edge.0.in
+net stop-pulse             <= edge.0.out
+net stop-pulse             => halui.program.stop
+
+########## Expose simple fault bits so the operator sees why motion is inhibited
+net air-fault        <= not.3.out
+net temp-fault       <= not.4.out
+net toollock-fault   <= not.5.out
+net air-ok           => not.3.in     # lcec.0.1.din-5
+net temp-ok          => not.4.in     # lcec.0.1.din-0
+net tool-locked      => not.5.in     # lcec.0.1.din-1
+
+
+
+####################################################
+
+########## Spindle at-speed from RPM feedback with 100 RPM window ---
+
+# Create one 'near' comparator and one 'and2' gate
+setp    near.0.difference 75     # tolerance in RPM
+
+# Commanded RPM from motion
+net spindle-speed-out => near.0.in1
+
+# Feedback RPM from Modbus
+# (You already have: net spindle-encoder-speed <= es850s.es850s_read.04.float)
+net displayed-rpm => near.0.in2
+
+# Output from comparator (true when |cmd - fb| <= 100 RPM)
+net atspeed-window near.0.out
+
+# Safety OK and tolerance gating
+net spindle-safety-ok               => and2.6.in0
+net atspeed-window                  => and2.6.in1
+
+# Final at-speed signal for LinuxCNC motion
+net spindle-at-speed and2.6.out                     => spindle.0.at-speed
+

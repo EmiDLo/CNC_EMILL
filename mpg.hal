@@ -1,0 +1,61 @@
+#file name mpg.hal
+
+#loadrt mux4 count=1   # already loaded
+loadrt ilowpass
+
+addf mux4.2 servo-thread
+addf ilowpass.0 servo-thread
+
+
+setp ilowpass.0.scale 1000 					#set for quadrature
+setp ilowpass.0.gain 0.02					# the highter the tighter the tracking default 0.01
+setp joint.0.jog-accel-fraction 0.1
+setp joint.1.jog-accel-fraction 0.1
+setp joint.2.jog-accel-fraction 0.1
+setp joint.3.jog-accel-fraction 0.1
+#setp joint.4.jog-accel-fraction 0.1
+
+net x-jog-select joint.0.jog-enable <= lcec.0.7.din-0
+net y-jog-select joint.1.jog-enable <= lcec.0.7.din-1
+net z-jog-select joint.2.jog-enable <= lcec.0.7.din-2
+net a-jog-select joint.3.jog-enable <= lcec.0.7.din-3
+#net b-jog-select joint.4.jog-enable <= lcec.0.7.din-4
+
+
+
+net x1 lcec.0.7.din-5 => mux4.2.sel0
+net x10 lcec.0.7.din-6 => mux4.2.sel1
+
+setp mux4.2.in0 .000025 # X100
+setp mux4.2.in1 .00000025 # X1
+setp mux4.2.in2 .0000025 # X10
+
+net jogscale mux4.2.out => joint.0.jog-scale
+net jogscale => joint.1.jog-scale
+net jogscale => joint.2.jog-scale
+net jogscale => joint.3.jog-scale
+#net jogscale => joint.4.jog-scale
+
+net mpg-out lcec.0.6.enc-count => ilowpass.0.in
+
+net jogcounts ilowpass.0.out => joint.0.jog-counts
+net jogcounts => joint.1.jog-counts
+net jogcounts => joint.2.jog-counts
+net jogcounts => joint.3.jog-counts
+#net jogcounts => joint.4.jog-counts
+
+net jogcounts => axis.x.jog-counts
+net x-jog-select => axis.x.jog-enable
+net jogscale => axis.x.jog-scale
+
+net jogcounts => axis.y.jog-counts
+net y-jog-select => axis.y.jog-enable
+net jogscale => axis.y.jog-scale
+
+net jogcounts => axis.z.jog-counts
+net z-jog-select => axis.z.jog-enable
+net jogscale => axis.z.jog-scale
+
+net jogcounts => axis.a.jog-counts
+net a-jog-select => axis.a.jog-enable
+net jogscale => axis.a.jog-scale

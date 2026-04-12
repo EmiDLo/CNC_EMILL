@@ -1,0 +1,49 @@
+# Halshow settings
+# This file is generated automatically.
+wm geometry . 946x895+662+89
+placeFrames 0.3
+set ::ratio 0.3
+set ::old_w_leftf 160
+set ::watchlist {
+    sig+prog-paused
+    sig+prog-running
+    sig+toolrel-cond
+    sig+toolrel-cond0
+    sig+toolrel-cond1
+    pin+lcec.0.8.enc-count
+    pin+lcec.0.8.enc-index-c-enable
+    pin+lcec.0.8.enc-pos
+    sig+spindle-status
+    sig+spindle-encoder-speed
+    sig+spindle-forward
+    sig+spindle-control-word
+    sig+temp-ok
+    sig+tool-locked
+    sig+tool-release-button
+    sig+air-ok
+    sig+air-and-temp-ok
+    sig+a-statusword
+    sig+spindle-set-speed
+    sig+spindle-speed-out
+    sig+spindle-safety-ok
+    pin+lcec.0.4.dout-0
+    pin+lcec.0.4.dout-1
+    pin+lcec.0.4.dout-2
+    pin+lcec.0.4.dout-3
+    pin+lcec.0.4.dout-4
+    pin+lcec.0.4.dout-5
+    pin+lcec.0.4.dout-6
+    pin+lcec.0.4.dout-7
+    sig+spindle-revs-raw
+    pin+spindle.0.revs
+    pin+lowpass.1.in
+    pin+lowpass.1.out
+    sig+spindle-rpm
+}
+set ::workmode watchhal
+set ::watchInterval 100
+set ::col1_width 100
+set ::ffmts 
+set ::ifmts 
+set ::alwaysOnTop 0
+set ::autoSaveWatchlist 1

@@ -1,0 +1,57 @@
+loadusr -Wn es850s mb2hal config=es850s_modbus.ini
+
+# Logic to select control word based on spindle enable
+loadrt mux4 count=3
+#loadrt abs count=2
+
+addf mux4.0 servo-thread
+addf mux4.1 servo-thread
+addf abs.1 servo-thread
+
+# --- mux4.0: build "raw" control word based on FWD/REV ---
+#   in0 STOP, in1 START (FWD), in2 START REV, in3 RESET
+setp mux4.0.in0 2177      # STOP
+setp mux4.0.in1 2178      # START
+setp mux4.0.in2 34946     # START REV
+setp mux4.0.in3 2433      # RESET
+net spindle-forward  => mux4.0.sel0           # from spindle.0.forward
+net spindle-reverse  => mux4.0.sel1           # from spindle.0.reverse
+net spindle-control-word-raw <= mux4.0.out    # internal: unsafe control word
+
+# --- mux4.1: SAFETY GATE ---
+# Select between STOP and the raw control word using spindle_safety_ok
+#  sel1 = 0   (so only in0/in1 are used)
+#  sel0 = spindle_safety_ok  (0 => STOP, 1 => pass-through)
+setp mux4.1.sel1 0
+setp mux4.1.in0  2177                              # STOP (safety FALSE)
+net spindle-control-word-raw => mux4.1.in1         # pass-through when safety TRUE
+net spindle-safety-ok        => mux4.1.sel0        # from your main HAL safety block
+
+# FINAL control word sent onward to the Modbus writer
+net spindle-control-word <= mux4.1.out
+
+
+
+# Write pins (OUT to drive)
+net spindle-control-word => es850s.es850s_write.00.float     # Modbus reg 1
+
+
+# Convert signed speed to absolute (positive) value
+net spindle-speed-out => abs.1.in
+net spindle-set-speed => abs.1.out
+net spindle-set-speed => es850s.es850s_write.01.float        # Modbus reg 2
+
+
+# Readback pins (from drive)
+net spindle-status <= es850s.es850s_read.03.int              # Modbus reg 4
+net spindle-encoder-speed <= es850s.es850s_read.04.float     # Modbus reg 5
+net spindle-torque <= es850s.es850s_read.05.float            # Modbus reg 6
+net spindle-output-power <= es850s.es850s_read.06.float      # Modbus reg 7
+net spindle-dc-bus-voltage <= es850s.es850s_read.07.int      # Modbus reg 8
+
+# Link Modbus pins to Probe basic control
+net spindle-forward <= spindle.0.forward
+net spindle-reverse <= spindle.0.reverse
+net spindle-speed-out <= spindle.0.speed-out
+
+

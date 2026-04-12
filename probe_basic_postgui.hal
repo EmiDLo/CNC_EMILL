@@ -1,0 +1,108 @@
+loadrt time
+loadrt sum2 count=1
+
+addf mux2.4 				servo-thread
+addf sum2.0 				servo-thread
+addf time.0 				servo-thread
+addf not.0 					servo-thread
+addf not.1					servo-thread
+addf scale.2 				servo-thread
+
+#net prog-running not.0.in <= halui.program.is-idle     # prog-running is defined in CNC_EMILL.hal as halui.program.is-running
+net prog-paused halui.program.is-paused => time.0.pause
+net cycle-timer time.0.start <= not.0.out
+net cycle-seconds qtpyvcp.timerseconds.in <= time.0.seconds
+net cycle-minutes qtpyvcp.timerminutes.in <= time.0.minutes
+net cycle-hours qtpyvcp.timerhours.in <= time.0.hours
+# *** Time items required for Probe Basic to run ***
+
+#  ---manual tool change signals---
+net tc-request               =>  qtpyvcp_manualtoolchange.change
+net tc-confirmed            <=  qtpyvcp_manualtoolchange.changed
+net tc-prep-number          =>  qtpyvcp_manualtoolchange.number
+
+# --- manual tool change handshake with iocontrol ---
+# (add these)
+# acknowledge tool-prepare immediately (no ATC)
+
+
+
+
+#######################################################################
+# Tool setter + over-travel wiring (EtherCAT lcec.0.1.din-6 / din-7)
+# - Tool setter is N.O.  -> goes TRUE on contact
+# - Over-travel is N.C.  -> goes FALSE on trip (we'll invert it)
+#######################################################################
+
+
+# Tool setter (N.O.) on lcec.0.1.din-6 -> direct to probe input
+net probe-in    lcec.0.1.din-6      => motion.probe-input
+net probe-in  => qtpyvcp.probe-led.on
+
+# Over-travel (N.C.) on lcec.0.1.din-7 -> invert -> estop (or abort)
+net ot-raw      lcec.0.1.din-7       => not.1.in
+net ot-tripped  not.1.out
+
+# Over Travel Action:
+net ot-tripped           => halui.estop.activate
+
+
+# *** Probe graphic simulation trigger push probe tip ***
+#net probe-in    => qtpyvcp.probe-in.out
+#net probe-in    => qtpyvcp.probe-led.on
+
+
+# ------------------ Air blast mapping (for tool setter cleaning) ------------------
+
+# Motion digital-out-02 -> EtherCAT DO2
+net airblast-cmd     motion.digital-out-02    => lcec.0.4.dout-2
+
+
+
+
+# *** Actual spindle readout from MODBUS ***
+
+#net spindle-encoder-speed =>  qtpyvcp.spindle-encoder-rpm.in
+
+# For forward +rpm and reverse -rpm display, follow 2 sections below
+
+# Subtract 65536 from encoder speed when reverse
+setp sum2.0.in1 -65536
+net spindle-encoder-speed => sum2.0.in0
+net corrected-speed => sum2.0.out
+
+# Select between normal and corrected value based on direction
+net spindle-reverse => mux2.4.sel
+net spindle-encoder-speed => mux2.4.in0       # forward
+net corrected-speed => mux2.4.in1             # reverse
+net displayed-rpm => mux2.4.out
+net displayed-rpm mux2.4.out => qtpyvcp.spindle-encoder-rpm.in
+
+# End of correct rpm display
+
+
+# *** Spindle Load Display - Linked to Spindle Torque ***
+
+setp scale.2.gain 0.1
+net spindle-torque es850s.es850s_read.05.float => scale.2.in
+net scaled-spindle-torque scale.2.out => qtpyvcp.spindle-load-indicator.in-f
+
+
+
+
+
+
+#*********************
+#   Simple example of connecting input to uoutput (SPINDLE Manual Tool Release Button)
+#   actual snipet including safety logic is in machine hal
+#*********************
+
+#net tool-release-button lcec.0.1.din-4 => lcec.0.4.dout-0
+
+#   Mist On - Off
+net mist <= iocontrol.0.coolant-mist
+net mist => lcec.0.4.dout-3
+
+
+
+
