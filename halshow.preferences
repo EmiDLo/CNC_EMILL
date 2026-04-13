@@ -1,6 +1,6 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 946x895+662+89
+wm geometry . 632x895+1159+649
 placeFrames 0.3
 set ::ratio 0.3
 set ::old_w_leftf 160
@@ -8,9 +8,6 @@ set ::watchlist {
     pin+lcec.0.2.din-2
     pin+lcec.0.2.din-3
     pin+lcec.0.2.din-4
-    pin+lcec.0.2.din-2-not
-    pin+lcec.0.2.din-3-not
-    pin+lcec.0.2.din-4-not
     pin+lcec.0.5.dout-0
     pin+lcec.0.1.din-6
     pin+motion.probe-input

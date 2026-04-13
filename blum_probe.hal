@@ -1,5 +1,5 @@
 # ############################################################
-# MASTER PROBE LOGIC (3D PROBE + TOOL SETTER)
+# MASTER PROBE LOGIC (REVISED FOR STAT2 & TOOL SETTER)
 # ############################################################
 
 # 1. ADD FUNCTIONS
@@ -8,27 +8,32 @@ addf or2.3          servo-thread
 addf or2.4          servo-thread
 addf dbounce.0      servo-thread
 
-# 2. BLUM 3D PROBE ACTIVATION (M64 P0)
+# 2. BLUM 3D PROBE ACTIVATION
 setp oneshot.0.width 0.5
 net blum-start-cmd     <= motion.digital-out-00 => oneshot.0.in
 net blum-hw-activate   <= oneshot.0.out        => lcec.0.5.dout-0
 
-# 3. BLUM 3D PROBE INTERNAL LOGIC (Combine TC + Error)
-net blum-tc-triggered  <= lcec.0.2.din-2-not   => or2.3.in0
-net blum-err-triggered <= lcec.0.2.din-4-not   => or2.3.in1
+# 3. BLUM 3D PROBE INTERNAL LOGIC
+# Signal from Terminal 12 (Stat2). It is HIGH (+24V) when TOUCHED.
+net blum-stat2-raw     <= lcec.0.2.din-2
+# Signal from Terminal 11 (Error). It is LOW (0V) when IR link is LOST.
+net blum-err-triggered <= lcec.0.2.din-4-not
+
+# Combine: TRUE if Stylus hit (din-1) OR Link lost (din-3-not)
+net blum-stat2-raw     => or2.3.in0
+net blum-err-triggered => or2.3.in1
 net blum-3d-raw-out    <= or2.3.out
 
 # 4. MASTER COMBINATION (3D Probe OR Tool Setter)
-# or2.4 combines the Blum logic with the Tool Setter (Slave 1, Pin 6)
-
+# Logic for Tool Setter (Slave 1, Pin 6). 
+# If it's NC, use -not so it's TRUE when the circuit opens (0V).
 net blum-3d-raw-out    => or2.4.in0
-net tool-setter-raw    <= lcec.0.1.din-6-not   => or2.4.in1
+net tool-setter-raw    <= lcec.0.1.din-6   => or2.4.in1
 
 # 5. FINAL FILTER & OUTPUT TO MOTION
-# This sends the "winner" to LinuxCNC
 net master-probe-raw   <= or2.4.out            => dbounce.0.in
 setp dbounce.0.delay 10
 net probe-in           <= dbounce.0.out        => motion.probe-input
 
-# 6. BATTERY ALARM
-net blum-batt-low      <= lcec.0.3.din-2-not
+# 6. BATTERY ALARM (Slave 2, Pin 3)
+net blum-batt-low      <= lcec.0.2.din-3-not
