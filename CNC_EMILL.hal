@@ -8,7 +8,7 @@ loadrt pid num_chan=4 debug=1
 loadrt scale count=3
 loadrt abs count=2
 loadrt comp count=1
-loadrt and2 count=9
+loadrt and2 count=10
 loadrt lowpass count=2
 loadrt conv_s32_float names=spindle_count_float
 loadrt ddt count=1
@@ -16,8 +16,8 @@ loadrt not count=8
 loadrt edge  count=1
 loadrt near count=1
 loadrt mux2 count=5
-loadrt or2 count=5         # Increased to 4 (0-2 e-stop logic, 3 for probe, Probe master)
-loadrt oneshot count=1     # Added for the Blum wake-up pulse
+loadrt or2 count=6         # Increased to 4 (0-2 e-stop logic, 3 for probe, Probe master)
+#loadrt oneshot count=1     # Added for the Blum wake-up pulse
 loadrt dbounce count=1     # Added for the Blum trigger filtering
 
 

@@ -1,32 +1,36 @@
 # ############################################################
-# MASTER PROBE LOGIC (REVISED FOR STAT2 & TOOL SETTER)
+# MASTER PROBE LOGIC - LEVEL CONTROL MODE
 # ############################################################
 
-# 1. ADD FUNCTIONS
-addf oneshot.0      servo-thread
-addf or2.3          servo-thread
-addf or2.4          servo-thread
-addf dbounce.0      servo-thread
+# 1. LOAD COMPONENTS
+# Ensure loadrt or2 count=6 and loadrt and2 count=1 in CNC_EMILL.hal
+addf and2.9          servo-thread
+addf or2.3           servo-thread
+addf or2.4           servo-thread
+addf or2.5           servo-thread
+addf dbounce.0       servo-thread
 
-# 2. BLUM 3D PROBE ACTIVATION
-setp oneshot.0.width 0.5
-net blum-start-cmd     <= motion.digital-out-00 => oneshot.0.in
-net blum-hw-activate   <= oneshot.0.out        => lcec.0.5.dout-0
+# 2. PROBE ACTIVATION (LEVEL CONTROL)
+# M64 P0 = ON (+24V) | M65 P0 = OFF (0V)
+net blum-active-signal <= motion.digital-out-00 => lcec.0.5.dout-0
 
 # 3. BLUM 3D PROBE INTERNAL LOGIC
-# Signal from Terminal 12 (Stat2). It is HIGH (+24V) when TOUCHED.
+# TC/Stat2 (din-1): High when Touched
 net blum-stat2-raw     <= lcec.0.2.din-2
-# Signal from Terminal 11 (Error). It is LOW (0V) when IR link is LOST.
-net blum-err-triggered <= lcec.0.2.din-4-not
 
-# Combine: TRUE if Stylus hit (din-1) OR Link lost (din-3-not)
+# Error (din-3): Low when IR Link is LOST
+# Logic: Only trip an IR Error if the probe is actually ON.
+net blum-ir-link-raw   <= lcec.0.2.din-4-not
+net blum-active-signal => and2.9.in0
+net blum-ir-link-raw   => and2.9.in1
+net blum-ir-fault      <= and2.9.out
+
+# Combine: TRUE if (Stylus hit) OR (Probe is ON AND IR link lost)
 net blum-stat2-raw     => or2.3.in0
-net blum-err-triggered => or2.3.in1
+net blum-ir-fault      => or2.3.in1
 net blum-3d-raw-out    <= or2.3.out
 
 # 4. MASTER COMBINATION (3D Probe OR Tool Setter)
-# Logic for Tool Setter (Slave 1, Pin 6). 
-# If it's NC, use -not so it's TRUE when the circuit opens (0V).
 net blum-3d-raw-out    => or2.4.in0
 net tool-setter-raw    <= lcec.0.1.din-6   => or2.4.in1
 
@@ -35,5 +39,8 @@ net master-probe-raw   <= or2.4.out            => dbounce.0.in
 setp dbounce.0.delay 10
 net probe-in           <= dbounce.0.out        => motion.probe-input
 
-# 6. BATTERY ALARM (Slave 2, Pin 3)
-net blum-batt-low      <= lcec.0.2.din-3-not
+# 6. SAFETY ALARMS (Battery & IR Fault)
+# If Battery is Low OR IR Link is broken while probe is ON -> Feed Hold (Stop)
+net blum-batt-alarm    <= lcec.0.2.din-3-not   => or2.5.in0
+net blum-ir-fault      => or2.5.in1
+net master-safety-stop <= or2.5.out            => motion.feed-hold
