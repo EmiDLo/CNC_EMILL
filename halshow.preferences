@@ -12,6 +12,8 @@ set ::watchlist {
     pin+lcec.0.2.din-3-not
     pin+lcec.0.2.din-4-not
     pin+lcec.0.5.dout-0
+    pin+lcec.0.1.din-6
+    pin+motion.probe-input
 }
 set ::workmode watchhal
 set ::watchInterval 100

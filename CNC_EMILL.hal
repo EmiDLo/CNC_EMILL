@@ -16,6 +16,9 @@ loadrt not count=8
 loadrt edge  count=1
 loadrt near count=1
 loadrt mux2 count=5
+loadrt or2 count=5         # Increased to 4 (0-2 e-stop logic, 3 for probe, Probe master)
+loadrt oneshot count=1     # Added for the Blum wake-up pulse
+loadrt dbounce count=1     # Added for the Blum trigger filtering
 
 
 
@@ -320,7 +323,6 @@ net estop_hw_raw                     => not.6.in
 net safety_ok                    not.6.out          # 1 = safe, 0 = unsafe
 
 # --- Latching logic: trips on hardware or GUI E-stop; auto-resets when safe ---
-loadrt or2 count=4
 addf   or2.0                     servo-thread       # trip OR (hardware | GUI)
 addf   or2.1                     servo-thread       # reset OR (safety_ok | GUI reset)
 addf   or2.2                     servo-thread       # toolrelease OR (not-running | toolchange)

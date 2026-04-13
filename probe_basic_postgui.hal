@@ -36,7 +36,7 @@ net tc-prep-number          =>  qtpyvcp_manualtoolchange.number
 
 
 # Tool setter (N.O.) on lcec.0.1.din-6 -> direct to probe input
-net probe-in    lcec.0.1.din-6      => motion.probe-input
+# net probe-in    lcec.0.1.din-6      => motion.probe-input
 net probe-in  => qtpyvcp.probe-led.on
 
 # Over-travel (N.C.) on lcec.0.1.din-7 -> invert -> estop (or abort)

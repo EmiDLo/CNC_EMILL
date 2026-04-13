@@ -1,34 +1,34 @@
 # ############################################################
-# BLUM TC52 PROBE CONFIGURATION (INDEXED VERSION)
+# MASTER PROBE LOGIC (3D PROBE + TOOL SETTER)
 # ############################################################
-loadrt oneshot count=1
-loadrt dbounce count=1
 
-# 1. ADD FUNCTIONS TO THREAD
-# We use the new indices we created in the main HAL file
-addf oneshot.1      servo-thread
+# 1. ADD FUNCTIONS
+addf oneshot.0      servo-thread
 addf or2.3          servo-thread
-addf dbounce.1      servo-thread
+addf or2.4          servo-thread
+addf dbounce.0      servo-thread
 
-# 2. PROBE ACTIVATION (WAKE-UP)
-# Use oneshot.1 (since oneshot.0 is used for drives)
-setp oneshot.1.width 0.5
-net blum-start-cmd     <= motion.digital-out-00 => oneshot.1.in
-net blum-hw-activate   <= oneshot.1.out        => lcec.0.5.dout-0
+# 2. BLUM 3D PROBE ACTIVATION (M64 P0)
+setp oneshot.0.width 0.5
+net blum-start-cmd     <= motion.digital-out-00 => oneshot.0.in
+net blum-hw-activate   <= oneshot.0.out        => lcec.0.5.dout-0
 
-# 3. PROBE TRIGGER & ERROR LOGIC
-# TC (Pin 2) and ERROR (Pin 4) from Slave 2
-# We use or2.3 (since 0 and 1 are used for limits)
+# 3. BLUM 3D PROBE INTERNAL LOGIC (Combine TC + Error)
+net blum-tc-triggered  <= lcec.0.2.din-2-not   => or2.3.in0
+net blum-err-triggered <= lcec.0.2.din-4-not   => or2.3.in1
+net blum-3d-raw-out    <= or2.3.out
 
-# Combine them: If Stylus is hit (din-1-not) OR IR link is lost (din-3-not)
-net blum-tc-triggered  <= lcec.0.2.din-1-not   => or2.3.in0
-net blum-err-triggered <= lcec.0.2.din-3-not   => or2.3.in1
+# 4. MASTER COMBINATION (3D Probe OR Tool Setter)
+# or2.4 combines the Blum logic with the Tool Setter (Slave 1, Pin 6)
 
-# 4. DEBOUNCE & OUTPUT TO MOTION
-# Use dbounce.1 (since dbounce.0 is already in your main HAL)
-net blum-combined      <= or2.3.out            => dbounce.1.in
-setp dbounce.1.delay 10
-net probe-in           <= dbounce.1.out        => motion.probe-input
+net blum-3d-raw-out    => or2.4.in0
+net tool-setter-raw    <= lcec.0.1.din-6-not   => or2.4.in1
 
-# 5. BATTERY ALARM (Pin 3)
-net blum-batt-low      <= lcec.0.2.din-2-not
+# 5. FINAL FILTER & OUTPUT TO MOTION
+# This sends the "winner" to LinuxCNC
+net master-probe-raw   <= or2.4.out            => dbounce.0.in
+setp dbounce.0.delay 10
+net probe-in           <= dbounce.0.out        => motion.probe-input
+
+# 6. BATTERY ALARM
+net blum-batt-low      <= lcec.0.3.din-2-not
