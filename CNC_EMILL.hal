@@ -16,9 +16,12 @@ loadrt not count=8
 loadrt edge  count=1
 loadrt near count=1
 loadrt mux2 count=5
-loadrt or2 count=6         # Increased to 4 (0-2 e-stop logic, 3 for probe, Probe master)
+loadrt or2 count=6         # Increased to 4 (0-2 e-stop logic, 3 for probe, 4 Probe master, 5 safety)
 #loadrt oneshot count=1     # Added for the Blum wake-up pulse
 loadrt dbounce count=1     # Added for the Blum trigger filtering
+loadrt orient count=1
+loadrt mult2 count=1
+
 
 
 
@@ -535,4 +538,6 @@ net atspeed-window                  => and2.6.in1
 
 # Final at-speed signal for LinuxCNC motion
 net spindle-at-speed and2.6.out                     => spindle.0.at-speed
+
+
 

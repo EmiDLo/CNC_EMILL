@@ -1,0 +1,4 @@
+#!/bin/bash
+halcmd setp motion.digital-out-00 0
+halcmd setp motion.spindle-orient 0
+exit 0

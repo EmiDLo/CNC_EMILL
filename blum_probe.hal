@@ -2,13 +2,48 @@
 # MASTER PROBE LOGIC - LEVEL CONTROL MODE
 # ############################################################
 
-# 1. LOAD COMPONENTS
+# LOAD COMPONENTS
 # Ensure loadrt or2 count=6 and loadrt and2 count=1 in CNC_EMILL.hal
 addf and2.9          servo-thread
 addf or2.3           servo-thread
 addf or2.4           servo-thread
 addf or2.5           servo-thread
 addf dbounce.0       servo-thread
+addf orient.0        servo-thread
+addf mux2.4          servo-thread
+addf mult2.0         servo-thread
+
+
+# 1. SPINDLE ORIENTATION (M19) SETUP
+# Uses the 'spindle-revs' signal (EL5021) already defined in CNC_EMILL.hal
+net spindle-revs        => orient.0.position
+setp orient.0.tolerance 0.5
+setp orient.0.mode      0      # Mode 0 = Shortest path to target angle
+
+# Connect M19 Motion Signals
+net orient-angle  motion.spindle-orient-angle  => orient.0.angle
+net orient-dir    motion.spindle-orient-direction => orient.0.direction
+net orient-enable motion.spindle-orient        => orient.0.enable
+net orient-complete orient.0.is-oriented       => motion.spindle-is-oriented
+
+# Converts orient.0.command error (-0.5 to 0.5) into VFD Speed
+net orient-raw-dist      orient.0.command => mult2.0.in0
+setp mult2.0.in1         150.0   # GAIN: Adjust this to control orientation speed
+net orient-vel-cmd       mult2.0.out
+
+# 3. SPINDLE SPEED MUX (Switching between G-code speed and M19 speed)
+# Replace 'spindle-vel-cmd' with your actual speed signal name if different
+net spindle-speed-raw    => mux2.4.in0
+net orient-vel-cmd       orient.0.command => mux2.4.in1
+net orient-enable        => mux2.4.sel
+
+# Redirect the MUX output to your VFD (Assuming vfd-spindle-speed-abs is your pin)
+# This replaces the direct connection from speed-out to the VFD.
+net final-vfd-speed      mux2.4.out => vfd-spindle-speed-abs
+
+
+
+
 
 # 2. PROBE ACTIVATION (LEVEL CONTROL)
 # M64 P0 = ON (+24V) | M65 P0 = OFF (0V)
