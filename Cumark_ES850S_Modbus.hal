@@ -14,8 +14,8 @@ setp mux4.0.in0 2177      # STOP
 setp mux4.0.in1 2178      # START
 setp mux4.0.in2 34946     # START REV
 setp mux4.0.in3 2433      # RESET
-net spindle-forward  => mux4.0.sel0           # from spindle.0.forward
-net spindle-reverse  => mux4.0.sel1           # from spindle.0.reverse
+net vfd-run-ready => mux4.0.sel0          # from spindle.0.forward
+net vfd-rev-ready => mux4.0.sel1          # from spindle.0.reverse
 net spindle-control-word-raw <= mux4.0.out    # internal: unsafe control word
 
 # --- mux4.1: SAFETY GATE ---
@@ -50,8 +50,8 @@ net spindle-output-power <= es850s.es850s_read.06.float      # Modbus reg 7
 net spindle-dc-bus-voltage <= es850s.es850s_read.07.int      # Modbus reg 8
 
 # Link Modbus pins to Probe basic control
-net spindle-forward <= spindle.0.forward
-net spindle-reverse <= spindle.0.reverse
-net spindle-speed-out <= spindle.0.speed-out
+#net spindle-forward <= spindle.0.forward
+#net spindle-reverse <= spindle.0.reverse
+#net spindle-speed-out <= spindle.0.speed-out
 
 

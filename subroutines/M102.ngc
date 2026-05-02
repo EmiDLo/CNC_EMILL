@@ -1,0 +1,11 @@
+(M102: Blum Probe Turn Off)
+O<M102> sub
+
+(1. Turn off Digital Output 0)
+M65 P0
+
+(2. Release Spindle Orientation by commanding a Stop)
+M5
+
+O<M102> endsub
+M2

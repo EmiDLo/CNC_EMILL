@@ -1,0 +1,14 @@
+(M101: Blum Probe Orient and Wake-up)
+O<M101> sub
+
+(1. Orient Spindle to 0 degrees)
+M19 R0 
+
+(2. Turn on Digital Output 0 to wake up Blum Probe)
+M64 P0
+
+(3. Small dwell to allow IR link to establish)
+G4 P0.5
+
+O<M101> endsub
+M2

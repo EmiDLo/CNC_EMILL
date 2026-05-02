@@ -4,23 +4,24 @@ loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JO
 loadusr -W lcec_conf /home/aimilios/linuxcnc/configs/CNC_EMILL/ethercat-conf.xml
 loadrt lcec
 loadrt cia402 count=6
-loadrt pid num_chan=4 debug=1
+loadrt pid num_chan=5 debug=1
 loadrt scale count=3
-loadrt abs count=2
-loadrt comp count=1
-loadrt and2 count=10
+loadrt abs count=3
+loadrt comp count=2
+loadrt and2 count=12
 loadrt lowpass count=2
 loadrt conv_s32_float names=spindle_count_float
 loadrt ddt count=1
-loadrt not count=8
-loadrt edge  count=1
-loadrt near count=1
-loadrt mux2 count=5
-loadrt or2 count=6         # Increased to 4 (0-2 e-stop logic, 3 for probe, 4 Probe master, 5 safety)
-#loadrt oneshot count=1     # Added for the Blum wake-up pulse
+loadrt not count=10
+loadrt edge  count=2
+loadrt near count=2
+loadrt mux2 count=7
+loadrt or2 count=9         # Increased to 4 (0-2 e-stop logic, 3 for probe, 4 Probe master, 5 safety, orient start)
+loadrt oneshot count=1     # Added for spindle orient
 loadrt dbounce count=1     # Added for the Blum trigger filtering
-loadrt orient count=1
+loadrt s_orient count=1
 loadrt mult2 count=1
+
 
 
 
@@ -46,6 +47,7 @@ addf pid.0.do-pid-calcs       servo-thread
 addf pid.1.do-pid-calcs       servo-thread
 addf pid.2.do-pid-calcs       servo-thread
 addf pid.3.do-pid-calcs       servo-thread
+
 
 addf cia402.0.write-all       servo-thread
 addf cia402.1.write-all       servo-thread
@@ -388,6 +390,7 @@ net spindle-rpm scale.1.out
 # Connect C latch valid to LinuxCNC's index-enable
 #net encoder-index-enable   lcec.0.8.enc-index-c-enable => spindle.0.index-enable
 net spindle-index-enable   spindle.0.index-enable => lcec.0.8.enc-index-c-enable
+
 
 #FILTER
 
