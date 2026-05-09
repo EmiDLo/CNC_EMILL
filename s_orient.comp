@@ -72,66 +72,70 @@ license "GPL";
 
 FUNCTION(_) {
 
-    static double target_angle;
-    static double latched_position;
-    is_oriented = 0; // spindle.is-oriented inhibits spindle.orient
+static double target_angle;
+static double latched_position;
 
-    switch (state){
-    case 0: // waiting
-        if (enable) {
-        index_enable = 0;
-           if (enable ^ last_enable) {     // positive edge on enable
-               is_oriented = 0;
-               if (1>0){
-                   index_enable = 1;
-                   state = 3;
-               } else {
-                   state = 1;
-               }
-           }
+switch (state){
+
+case 0: // waiting / holding
+    // CHANGED: Do NOT clear is_oriented here — let it hold so spindle.0.locked stays valid.
+    // Only start a new cycle on a positive edge OR if the angle changed while we're held.
+    if (enable) {
+        if (enable ^ last_enable) { // positive edge — fresh enable
+            is_oriented = 0;
+            index_enable = 1;
+            state = 3;
+        } else if (is_oriented && (fabs((angle/360.0) - target_angle) > 0.0001)) {
+            // CHANGED: already holding but a new angle arrived — start new cycle
+            is_oriented = 0;
+            index_enable = 1;
+            state = 3;
         }
+    } else {
+        is_oriented = 0; // only clear when enable actually drops (M5)
+    }
+    break;
+
+case 1: // normal orient - init
+    if (! enable) { is_oriented = 0; state = 0; break; }
+    debounce = 0;
+    latched_position = position;  // CHANGED: capture real position after index reset
+    target_angle = angle/360.0;
+    state = 2;
+    break;
+
+case 2: // orienting
+    if (! enable) { is_oriented = 0; state = 0; break; }
+    switch (mode & 0x0F) {
+    case 0: // shortest move
+        command = floor(latched_position+0.5-target_angle) + target_angle;
         break;
-        
-    case 1: // normal orient - init
-        if (! enable) state = 0;
-        debounce = 0;
-        latched_position = position;
-        target_angle =  angle/360.0;
-        state = 2;
+    case 1: // always cw
+        command = ceil(latched_position-target_angle) + target_angle;
         break;
-        
-    case 2: // orienting
-        if (! enable) state = 0;
-        switch (mode & 0x0F) {
-        case 0: // shortest move
-            command = floor(latched_position+0.5-target_angle) + target_angle;
-            break;
-        case 1: // always cw
-            command = ceil(latched_position-target_angle)  + target_angle;
-            break;
-        case 2: // always ccw
-            command = floor(latched_position-target_angle) + target_angle ;
-            break;
-        default:
-            rtapi_print_msg(RTAPI_MSG_ERR, "unhandled mode %i\n", mode & 0x0F);
-        }
-       poserr = (position - command) * 360.0;
-       debounce += (fabs(poserr) < tolerance && debounce <=100);
-       is_oriented = (debounce > 100);
-       if (is_oriented) state = 0;
-       break;
-       
-    case 3: // waiting for spindle index
-        if (! enable) state = 0;
-        if (! index_enable){ // index has reset)
-            state = 1;
-            break;
-        }
-        command = position + 1.5;
+    case 2: // always ccw
+        command = floor(latched_position-target_angle) + target_angle;
+        break;
+    default:
+        rtapi_print_msg(RTAPI_MSG_ERR, "unhandled mode %i\n", mode & 0x0F);
+    }
+    poserr = (position - command) * 360.0;
+    debounce += (fabs(poserr) < tolerance && debounce <= 100);
+    is_oriented = (debounce > 100);
+    if (is_oriented) state = 0;
+    break;
+
+case 3: // waiting for spindle index
+    if (! enable) { is_oriented = 0; state = 0; break; }
+    if (! index_enable){ // index has reset
+        state = 1;
         break;
     }
-    last_enable = enable;
-    
+    command = position + 1.5;
+    break;
+}
+
+last_enable = enable;
 }
 
 
