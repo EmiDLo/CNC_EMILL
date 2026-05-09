@@ -38,6 +38,7 @@ net spindle-control-word => es850s.es850s_write.00.float     # Modbus reg 1
 
 # Convert signed speed to absolute (positive) value
 net spindle-speed-out => abs.1.in
+#net orient-speed-to-vfd => abs.1.in
 net spindle-set-speed => abs.1.out
 net spindle-set-speed => es850s.es850s_write.01.float        # Modbus reg 2
 
