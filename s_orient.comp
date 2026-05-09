@@ -95,7 +95,7 @@ FUNCTION(_) {
     case 1: // normal orient - init
         if (! enable) state = 0;
         debounce = 0;
-        latched_position = 0.0; // Force zero start after index reset
+        latched_position = position;
         target_angle =  angle/360.0;
         state = 2;
         break;

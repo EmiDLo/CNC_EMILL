@@ -71,11 +71,15 @@ net orient-active                       => and2.10.in0
 net orient-not-rev   not.10.out         => and2.10.in1
 net orient-fwd-bit   and2.10.out        => or2.6.in1
 
-# EXCLUSIVE REVERSE BIT: (Active AND Reverse AND NOT Searching)
-net spindle-index-enable                => not.11.in
-net orient-search-off not.11.out        => and2.11.in0
-net orient-is-rev                       => and2.11.in1
-net orient-rev-bit   and2.11.out        => or2.7.in1
+# EXCLUSIVE REVERSE BIT: (orient REQUEST active AND Reverse AND NOT Searching)
+# Use spindle.0.orient (raw request) not the latched orient-active,
+# so M5 immediately clears the reverse bit even while spindle.0.locked is still high.
+net spindle-index-enable => not.11.in
+net orient-search-off not.11.out => and2.11.in0
+net orient-is-rev => and2.11.in1
+net orient-rev-bit and2.11.out => and2.12.in0
+net orient-req => and2.12.in1
+net orient-rev-gated and2.12.out => or2.7.in1
 
 # 7. FINAL SIGNALS TO MODBUS HAL
 net spindle-fwd-cmd  spindle.0.forward  => or2.6.in0

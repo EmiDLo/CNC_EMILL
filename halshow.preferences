@@ -1,13 +1,12 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 632x869+941+80
+wm geometry . 632x869+1018+88
 placeFrames 0.3758064516129032
 set ::ratio 0.3758064516129032
 set ::old_w_leftf 160
 set ::watchlist {
     pin+s-orient.0.command
     pin+s-orient.0.position
-    pin+s-orient.0.tolerance
     pin+s-orient.0.mode
     pin+s-orient.0.index-enable
     pin+s-orient.0.enable
@@ -35,6 +34,8 @@ set ::watchlist {
     pin+mux4.0.in3
     pin+mux4.1.in0
     pin+mux4.1.out
+    pin+s-orient.0.poserr
+    pin+s-orient.0.tolerance
 }
 set ::workmode watchhal
 set ::watchInterval 100
