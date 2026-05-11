@@ -27,6 +27,9 @@ o<probe_y_plus> sub
       (MSG, Specified probe tool #<probe_tool_number> not in spindle, aborting)
       o<probe_y_plus> return
   o100 endif
+  
+  (Orient spindle — stylus faces +Y)
+  o<probe_preflight> call [180][1]
 
   (Probe Diameter)
   #<probe_diameter> = #5410

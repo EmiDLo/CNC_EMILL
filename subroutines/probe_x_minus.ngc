@@ -8,7 +8,9 @@
 (ensure all settings have been set properly according to help diagrams)
 
 o<probe_x_minus> sub
-
+  
+  o<probe_preflight> call [90][1]
+  
   (uses NGCGUI style arg spec)
   (number after "=" in comment is default value)
   #<probe_tool_number> = #1
@@ -27,6 +29,9 @@ o<probe_x_minus> sub
       (MSG, Specified probe tool #<probe_tool_number> not in spindle, aborting)
       o<probe_x_minus> return
   o100 endif
+  
+  (Orient spindle — stylus faces -X)
+  o<probe_preflight> call [90][1]
 
   (Probe Diameter)
   #<probe_diameter> = #5410

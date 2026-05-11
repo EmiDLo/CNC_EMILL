@@ -1,0 +1,34 @@
+(Shared probe preflight: probe error check + spindle orientation)
+(#1 = orientation angle in degrees)
+(#2 = orientation enable: 0=skip, 1=orient)
+
+o<probe_preflight> sub
+  #<orient_angle>  = #1
+  #<orient_enable> = #2
+
+  (Probe error check)
+  M66 P3 L4 Q0.5
+  o<pbp_probe_error_guard> if [#5399 NE 0]
+    (ABORT, Probe preflight: probe error input active)
+  o<pbp_probe_error_guard> endif
+
+  o<pbp_optional_orient> if [#<orient_enable> GT 0]
+
+    (Skip orient if already at same angle)
+    o<pbp_init_cache> if [EXISTS[#<_orient_last_angle>] EQ 0]
+      #<_orient_last_angle> = 999999
+    o<pbp_init_cache> endif
+
+    #<orient_delta> = ABS[#<orient_angle> - #<_orient_last_angle>]
+    o<pbp_orient_if_needed> if [#<orient_delta> GT 0.001]
+      o<orientprobe> call [#<orient_angle>]
+      G4 P1.0
+      #<_orient_last_angle> = #<orient_angle>
+    o<pbp_orient_if_needed> endif
+
+  o<pbp_optional_orient> endif
+
+G90
+o<probe_preflight> endsub [1]
+
+M2

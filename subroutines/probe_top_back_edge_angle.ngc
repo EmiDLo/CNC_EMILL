@@ -44,6 +44,10 @@ o<probe_top_back_edge_angle> sub
       o<probe_top_back_edge_angle> return
   o100 endif
 
+  (Turn on wireless probe and allow time to establish IR link)
+  M64 P0
+  G4 P1.0
+
   (Probe Diameter)
   #<probe_diameter> = #5410
 
@@ -125,6 +129,14 @@ o<probe_top_back_edge_angle> sub
 
   (Reinstate Feedrate Override)
   M50 P1
+
+  (Release spindle orient hold)
+  M5
+
+  #<_orient_last_angle> = 999999    ; force fresh orient on next cycle
+
+  (Turn off wireless probe to conserve battery)
+  M65 P0
 
 o<probe_top_back_edge_angle> endsub
 

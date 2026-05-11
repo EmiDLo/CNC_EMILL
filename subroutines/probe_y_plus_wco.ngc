@@ -38,6 +38,9 @@ o<probe_y_plus_wco> sub
       M50 P1
       o<probe_y_plus_wco> return
   o100 endif
+  
+  (Orient spindle — stylus faces +Y)
+  o<probe_preflight> call [180][1]
 
   (Probe Diameter)
   #<probe_diameter> = #5410

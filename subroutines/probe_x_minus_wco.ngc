@@ -9,6 +9,8 @@
 
 o<probe_x_minus_wco> sub
 
+  o<probe_preflight> call [90][1]
+  
   (uses NGCGUI style arg spec)
   (number after "=" in comment is default value)
   #<probe_tool_number> = #3014    (=99)
@@ -38,6 +40,9 @@ o<probe_x_minus_wco> sub
       M50 P1
       o<probe_x_minus_wco> return
   o100 endif
+  
+  (Orient spindle — stylus faces -X)
+  o<probe_preflight> call [90][1]
 
   (Probe Diameter)
   #<probe_diameter> = #5410

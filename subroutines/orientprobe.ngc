@@ -1,0 +1,13 @@
+(Orient spindle for probe direction)
+(#1 = desired orientation angle in degrees)
+
+o<orientprobe_reset> sub
+  #<_orient_last_angle> = 999999
+o<orientprobe_reset> endsub [1]
+
+o<orientprobe> sub
+  #<orient_angle> = #1
+  M19 R#<orient_angle> Q4
+o<orientprobe> endsub [1]
+
+M2
