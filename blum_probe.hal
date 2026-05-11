@@ -4,29 +4,29 @@
 
 # LOAD COMPONENTS
 # Ensure loadrt or2 count=6 and loadrt and2 count=1 in CNC_EMILL.hal
-addf abs.2           servo-thread  # Used to keep orient speed positive
-addf and2.9          servo-thread
-addf and2.10          servo-thread
-addf and2.11         servo-thread
-addf and2.12         servo-thread
-addf or2.3           servo-thread
-addf or2.4           servo-thread
-addf or2.5           servo-thread
-addf or2.6           servo-thread
-addf or2.7           servo-thread
-addf or2.8           servo-thread
-addf dbounce.0       servo-thread
-addf mux2.5          servo-thread
-addf mux2.6          servo-thread
-addf mult2.0         servo-thread
-addf oneshot.0       servo-thread
-addf edge.1          servo-thread
-addf s-orient.0      servo-thread
-addf pid.4.do-pid-calcs 	  servo-thread
-addf comp.1          servo-thread
-addf not.10           servo-thread
-addf not.11           servo-thread
-addf near.1          servo-thread
+addf abs.2              servo-thread
+addf and2.9             servo-thread
+addf or2.3              servo-thread
+addf or2.4              servo-thread
+addf or2.5              servo-thread
+addf or2.8              servo-thread
+addf dbounce.0          servo-thread
+addf mux2.5             servo-thread
+addf mult2.0            servo-thread
+addf oneshot.0          servo-thread
+addf edge.1             servo-thread
+addf s-orient.0         servo-thread
+addf pid.4.do-pid-calcs servo-thread
+addf mux2.6             servo-thread
+addf comp.1             servo-thread
+addf not.10             servo-thread
+addf not.11             servo-thread
+addf and2.10            servo-thread
+addf and2.11            servo-thread
+addf and2.12            servo-thread
+addf or2.6              servo-thread
+addf or2.7              servo-thread
+addf near.1             servo-thread
 
 
 
@@ -42,24 +42,26 @@ net orient-active or2.8.out             => pid.4.enable mux2.5.sel s-orient.0.en
 
 # 2. TARGET & FEEDBACK
 setp mult2.0.in1     0.002777778        # (1/360)
-net orient-angle     spindle.0.orient-angle => mult2.0.in0
-net orient-target    mult2.0.out        => pid.4.command near.1.in1
+net orient-angle     spindle.0.orient-angle => mult2.0.in0 s-orient.0.angle
+net orient-cmd-corrected s-orient.0.command => pid.4.command near.1.in1
 net spindle-revolutions => pid.4.feedback s-orient.0.position near.1.in2
 
 # 3. THE HANDSHAKE (Done Signal)
-setp near.1.difference 0.003
+setp near.1.difference 0.0056     # 2 degrees — looser than s-orient tolerance
+setp s-orient.0.tolerance 2.0
 net orient-done   near.1.out            => spindle.0.is-oriented
 
 # 4. PID APPROACH LOGIC
-setp pid.4.Pgain     100.0           
+setp pid.4.Pgain     245.0           
 setp pid.4.Igain     1.5                # Increased Igain for stiffer reverse hold
-setp pid.4.Dgain     0.1
-setp pid.4.maxoutput 100.0
+setp pid.4.Dgain     0.4
+setp pid.4.maxoutput 200.0
 net orient-pid-raw   pid.4.output       => mux2.6.in0
 
 # 5. SEARCH VS LOCK (Slowed search to 30 RPM to fix overshoot)
 setp mux2.6.in1      30.0               
-net spindle-index-enable                => mux2.6.sel s-orient.0.index-enable
+net spindle-index-enable => mux2.6.sel
+net orient-index-handshake s-orient.0.index-enable <=> lcec.0.8.enc-index-c-enable
 net phase-speed-signed  mux2.6.out      => abs.2.in comp.1.in0
 
 # 6. MODBUS DIRECTION GATING (The "Reverse" Fix)
@@ -78,7 +80,7 @@ net spindle-index-enable => not.11.in
 net orient-search-off not.11.out => and2.11.in0
 net orient-is-rev => and2.11.in1
 net orient-rev-bit and2.11.out => and2.12.in0
-net orient-req => and2.12.in1
+net orient-active => and2.12.in1
 net orient-rev-gated and2.12.out => or2.7.in1
 
 # 7. FINAL SIGNALS TO MODBUS HAL

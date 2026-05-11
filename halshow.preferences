@@ -1,6 +1,6 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 632x869+993+51
+wm geometry . 632x869+1170+82
 placeFrames 0.3758064516129032
 set ::ratio 0.3758064516129032
 set ::old_w_leftf 160
@@ -15,9 +15,6 @@ set ::watchlist {
     sig+vfd-run-ready
     sig+vfd-rev-ready
     sig+spindle-status
-    pin+spindle.0.brake
-    pin+spindle.0.forward
-    pin+spindle.0.reverse
     sig+orient-locked
     sig+orient-not-rev
     sig+spindle-stopped
@@ -29,10 +26,6 @@ set ::watchlist {
     pin+or2.8.in1
     pin+or2.8.out
     sig+spindle-control-word
-    pin+mux4.0.in1
-    pin+mux4.0.in2
-    pin+mux4.0.in3
-    pin+mux4.1.in0
     pin+mux4.1.out
     pin+s-orient.0.poserr
     pin+s-orient.0.tolerance
@@ -40,6 +33,15 @@ set ::watchlist {
     pin+pid.4.command
     pin+pid.4.feedback
     pin+pid.4.output
+    param+s-orient.0.state
+    pin+spindle.0.orient
+    pin+spindle.0.locked
+    pin+spindle.0.orient-angle
+    sig+orient-active
+    pin+near.1.out
+    param+near.1.difference
+    pin+pid.4.maxoutput
+    pin+mux2.6.in1
 }
 set ::workmode watchhal
 set ::watchInterval 100

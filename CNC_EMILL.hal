@@ -389,8 +389,8 @@ net spindle-rpm scale.1.out
 
 # Connect C latch valid to LinuxCNC's index-enable
 #net encoder-index-enable   lcec.0.8.enc-index-c-enable => spindle.0.index-enable
-net spindle-index-enable   spindle.0.index-enable => lcec.0.8.enc-index-c-enable
-
+#net spindle-index-enable   spindle.0.index-enable => lcec.0.8.enc-index-c-enable
+net spindle-index-enable   spindle.0.index-enable
 
 #FILTER
 
